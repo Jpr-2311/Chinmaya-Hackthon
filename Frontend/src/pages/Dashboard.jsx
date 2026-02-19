@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import StatsSection from "../components/StatsSection";
-import HeroUpload from "../components/HeroUpload";
-import LocationSection from "../components/LocationSection";
+import ReportPothole from "../components/ReportPothole";
 
 export default function Dashboard() {
   const [username, setUsername] = useState("User");
@@ -24,7 +23,6 @@ export default function Dashboard() {
 
       <div className="flex-1 p-6 space-y-8">
 
-        {/* Welcome Section */}
         <div className="bg-white rounded-2xl shadow-sm p-8">
           <h1 className="text-3xl font-bold text-blue-600">
             {greeting}, {username} 👋
@@ -36,9 +34,8 @@ export default function Dashboard() {
 
         <StatsSection />
 
-        <HeroUpload />
-
-        <LocationSection />
+        {/* 👇 THIS is the correct integration */}
+        <ReportPothole />
 
       </div>
     </div>
