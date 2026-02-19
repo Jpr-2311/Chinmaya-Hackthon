@@ -1,7 +1,25 @@
+export const levels = [
+  { level: 1, name: "Bronze Informer", badge: "🥉", min: 1000 },
+  { level: 2, name: "Silver Informer", badge: "🥈", min: 3000 },
+  { level: 3, name: "Gold Informer", badge: "🥇", min: 6000 },
+  { level: 4, name: "Elite Civic Guardian", badge: "👑", min: 10000 }
+];
+
 export const calculateLevel = (coins) => {
-  if (coins >= 10000) return { level: 4, badge: "👑" };
-  if (coins >= 6000) return { level: 3, badge: "🥇" };
-  if (coins >= 3000) return { level: 2, badge: "🥈" };
-  if (coins >= 1000) return { level: 1, badge: "🥉" };
-  return { level: 0, badge: "" };
+  let currentLevel = 0;
+
+  for (let i = levels.length - 1; i >= 0; i--) {
+    if (coins >= levels[i].min) {
+      currentLevel = levels[i].level;
+      break;
+    }
+  }
+
+  const levelData = levels.find(l => l.level === currentLevel);
+
+  return levelData || { level: 0, name: "New Informer", badge: "🔰", min: 0 };
+};
+
+export const getNextLevel = (coins) => {
+  return levels.find(level => coins < level.min);
 };

@@ -10,15 +10,17 @@ import Leaderboard from "../components/Leaderboard";
 
 export default function Dashboard() {
 
-  // 🔥 Gamification States
   const [coins, setCoins] = useState(0);
   const [level, setLevel] = useState(0);
   const [badge, setBadge] = useState("");
 
   const [username, setUsername] = useState("User");
   const [greeting, setGreeting] = useState("");
+  const [potholes, setPotholes] = useState([]);
 
-  // 👤 Load username + greeting
+  // Username + Greeting + UserId tracking
+  const userId = localStorage.getItem("userId");
+
   useEffect(() => {
     const storedUser = localStorage.getItem("username");
     if (storedUser) setUsername(storedUser);
@@ -27,11 +29,10 @@ export default function Dashboard() {
     if (hour < 12) setGreeting("Good Morning");
     else if (hour < 17) setGreeting("Good Afternoon");
     else setGreeting("Good Evening");
-  }, []);
+  }, [userId]); // Update when userId changes (user switches)
 
-  // 🪙 Real-time coin + level listener
+  // Real-time coin listener
   useEffect(() => {
-    const userId = localStorage.getItem("userId");
     if (!userId) return;
 
     const userRef = ref(db, `users/${userId}`);
@@ -50,7 +51,7 @@ export default function Dashboard() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [userId]); // Update when userId changes
 
   return (
     <div className="flex min-h-screen bg-gradient-to-r from-[#f8fbff] to-[#eef3ff]">
@@ -63,14 +64,14 @@ export default function Dashboard() {
         {/* MAIN CONTENT */}
         <div className="flex-1 p-6 space-y-8">
 
-          {/* 🪙 Coin Counter Top Right */}
+          {/* Coin Counter */}
           <div className="flex justify-end">
             <div className="bg-blue-100 px-5 py-2 rounded-xl font-semibold text-blue-700 shadow-sm">
               🪙 {coins} Coins | Level {level} {badge}
             </div>
           </div>
 
-          {/* 👋 Welcome Section */}
+          {/* Welcome */}
           <div className="bg-white rounded-2xl shadow-sm p-8">
             <h1 className="text-3xl font-bold text-blue-600">
               {greeting}, {username} 👋
@@ -80,14 +81,15 @@ export default function Dashboard() {
             </p>
           </div>
 
+          {/* Stats */}
           <StatsSection />
 
-          {/* 🚀 Report Upload Section */}
-          <ReportPothole />
+          {/* Upload Section */}
+          <ReportPothole onNewPothole={(p) => setPotholes(prev => [...prev, p])} />
 
         </div>
 
-        {/* 🏆 Leaderboard (Right Side) */}
+        {/* Right Leaderboard */}
         <div className="hidden lg:block w-80 p-6">
           <Leaderboard />
         </div>
