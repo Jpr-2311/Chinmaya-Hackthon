@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ref, onValue, update } from "firebase/database";
+import { ref, onValue, update, get } from "firebase/database";
 import { db } from "../firebase";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
@@ -74,7 +74,35 @@ function PotholeRequests() {
     }, []);
 
     const updateStatus = async (reportId, newStatus) => {
+        // Get the report to find the user and coins
+        const report = reports.find(r => r.id === reportId);
+        if (!report) return;
+
+        // Update report status
         await update(ref(db, `reports/${reportId}`), { status: newStatus });
+
+        // If marking as Resolved, award coins to user
+        if (newStatus === "Resolved" && report.userId) {
+            try {
+                const userRef = ref(db, `users/${report.userId}`);
+                const userSnapshot = await get(userRef);
+                
+                if (userSnapshot.exists()) {
+                    const userData = userSnapshot.val();
+                    const currentCoins = userData.coins || 0;
+                    const coinsToAward = report.coinsAwarded || 0;
+                    const currentReports = userData.reports || 0;
+
+                    // Update user coins and report count
+                    await update(ref(db, `users/${report.userId}`), {
+                        coins: currentCoins + coinsToAward,
+                        reports: currentReports + 1
+                    });
+                }
+            } catch (err) {
+                console.error("Error awarding coins:", err);
+            }
+        }
     };
 
     const severityColor = (s) =>

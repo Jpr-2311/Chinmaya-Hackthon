@@ -78,13 +78,8 @@ const DUMMY_POTHOLES = [
   { lat: 10.004053, lng: 76.304921,  severity: 'moderate', confidence: 0.85 },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DONOR ROUTES  —  real waypoints between hospitals, keyed "FROM-TO"
-// To add more pairs (e.g. H3→H1) just add the key and paste the coords.
-// ─────────────────────────────────────────────────────────────────────────────
 const DONOR_ROUTES = {
 
-  // ── H1 → H5  (Lisie Hospital → Renai Medicity) ──────────────────────────
   "H1-H5": [
     [9.988078,76.288166],[9.988826,76.288375],[9.988836,76.288385],
     [9.988841,76.288397],[9.988844,76.288454],[9.988857,76.288509],
@@ -122,8 +117,6 @@ const DONOR_ROUTES = {
     [10.007789,76.303560],[10.007808,76.303558],[10.007832,76.303518],
     [10.007858,76.303480],[10.007858,76.303458],[10.007874,76.303414],
   ],
-
-  // ── H5 → H1  (Renai Medicity → Lisie Hospital)  [reverse of H1-H5] ──────
   "H5-H1": [
     [10.007874,76.303414],[10.007858,76.303458],[10.007858,76.303480],
     [10.007832,76.303518],[10.007808,76.303558],[10.007789,76.303560],
@@ -162,7 +155,6 @@ const DONOR_ROUTES = {
     [9.988836,76.288385],[9.988826,76.288375],[9.988078,76.288166],
   ],
 
-  // ── H3 → H5  (Aster Medcity → Renai Medicity) ───────────────────────────
   "H3-H5": [
     [9.988078,76.288166],[9.988826,76.288375],[9.988836,76.288385],
     [9.988841,76.288397],[9.988844,76.288454],[9.988857,76.288509],
@@ -207,7 +199,6 @@ const DONOR_ROUTES = {
     [10.006650,76.278186],[10.006674,76.278093],[10.0066809,76.2774219],
   ],
 
-  // ── H5 → H3  (Renai Medicity → Aster Medcity)  [reverse of H3-H5] ───────
   "H5-H3": [
     [10.0066809,76.2774219],[10.006674,76.278093],[10.006650,76.278186],
     [10.006487,76.278222],[10.006291,76.278146],[10.006062,76.277609],
@@ -252,10 +243,6 @@ const DONOR_ROUTES = {
     [9.988078,76.288166],
   ],
 
-  // ── H1 → H3 / H3 → H1  (Lisie ↔ Aster Medcity) ─────────────────────────
-  // Paste your real waypoints here when you have them.
-  // For now we derive them from the existing accident route reversed.
-  // Replace these arrays with real coords at any time — nothing else needs changing.
   "H1-H3": null,   // will fall through to console.error below
   "H3-H1": null,
 };
@@ -267,14 +254,10 @@ const HOSPITAL_NAMES = {
   H5: "Renai Medicity",
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MapView
-//   donorMode  – switches to hospital→hospital organ transport mode
-//   donorFrom  – origin hospital ID  e.g. "H1"
-//   donorTo    – destination hospital ID  e.g. "H5"
-// ─────────────────────────────────────────────────────────────────────────────
+
 function MapView({ donorMode = false, donorFrom = null, donorTo = null }) {
-  const SERVER = "http://localhost:5001";
+  // const SERVER = "http://10.72.217.227:5001/";
+  const SERVER = "http://10.72.217.227:5001";
   const center = [9.9930419, 76.3017048];
 
   const [selectedHospital, setSelectedHospital] = useState(null);
@@ -530,9 +513,7 @@ function MapView({ donorMode = false, donorFrom = null, donorTo = null }) {
     return () => clearInterval(iv);
   }, [useDummyPotholes]);
 
-  // ── DONOR MODE INIT ────────────────────────────────────────────────────────
-  // Simply looks up the real pre-mapped route by key and sets state.
-  // Every other effect (animation, signals, potholes, sync) reuses unchanged.
+ 
   useEffect(() => {
     if (!donorMode || !donorFrom || !donorTo || donorFrom === donorTo) return;
 
@@ -544,7 +525,7 @@ function MapView({ donorMode = false, donorFrom = null, donorTo = null }) {
       return;
     }
 
-    setCriticality("VERY CRITICAL");   // organ transport = always highest priority
+    setCriticality("VERY CRITICAL");   
 
     setRoute(donorRoute);
     setsegmentIndex(0);
@@ -568,7 +549,6 @@ function MapView({ donorMode = false, donorFrom = null, donorTo = null }) {
     }]);
   }, [donorMode, donorFrom, donorTo]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Master broadcast ───────────────────────────────────────────────────────
   useEffect(() => {
     if (!isMaster || !route.length) return;
     const broadcast = async () => {
@@ -582,8 +562,6 @@ function MapView({ donorMode = false, donorFrom = null, donorTo = null }) {
     const iv = setInterval(broadcast, 200);
     return () => clearInterval(iv);
   }, [isMaster, currentPosition, criticality, signals, route, segmentIndex, arrived, deviceId, snappedPotholes]);
-
-  // ── Follower sync ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (isMaster) return;
     const check = async () => {
@@ -624,8 +602,6 @@ function MapView({ donorMode = false, donorFrom = null, donorTo = null }) {
   }, [arrived]);
 
   const getThresholdDistance = () => ({ STABLE: 40, CRITICAL: 80, "VERY CRITICAL": 200 }[criticality] ?? 60);
-
-  // ── Movement animation (unchanged — same for both modes) ──────────────────
   useEffect(() => {
     if (!route || route.length < 2 || !isMaster) return;
     const iv = setInterval(() => {
@@ -633,7 +609,7 @@ function MapView({ donorMode = false, donorFrom = null, donorTo = null }) {
       if (segmentIndex >= route.length - 1) return;
       const [lat1, lng1] = route[segmentIndex];
       const [lat2, lng2] = route[segmentIndex + 1];
-      const np = progress + 0.15;
+      const np = progress + 0.45;
       let lat, lng;
       if (np >= 1) { setsegmentIndex(segmentIndex + 1); setProgress(0); [lat, lng] = route[segmentIndex + 1]; }
       else         { lat = lat1 + (lat2 - lat1) * np; lng = lng1 + (lng2 - lng1) * np; setProgress(np); }
@@ -646,8 +622,6 @@ function MapView({ donorMode = false, donorFrom = null, donorTo = null }) {
     }, 100);
     return () => { clearInterval(iv); if (beepIntervalRef.current) { clearInterval(beepIntervalRef.current); beepIntervalRef.current = null; } };
   }, [segmentIndex, progress, criticality, route, isMaster]);
-
-  // ── ETA helpers ────────────────────────────────────────────────────────────
   const AMBULANCE_SPEED = 20;
   const getTimeBucket   = () => { const h = new Date().getHours(); return h < 10 ? "morning" : h < 18 ? "afternoon" : "night"; };
   const geDelayTime     = () => ({ STABLE: 10, CRITICAL: 5, "VERY CRITICAL": 2 }[criticality] ?? 8);
@@ -665,8 +639,6 @@ function MapView({ donorMode = false, donorFrom = null, donorTo = null }) {
     return Math.round(dist / AMBULANCE_SPEED + signals.filter(s => s.state === "RED").length * geDelayTime() + computePotholePenalty(testRoute, snappedPotholes, criticality) + bias[getTimeBucket()]);
   };
   const formETA = (s) => `${Math.floor(s / 60)} mins ${s % 60} secs`;
-
-  // ── Accident-only: auto select ─────────────────────────────────────────────
   const autoSelectNearestHospital = () => {
     if (beepIntervalRef.current) { clearInterval(beepIntervalRef.current); beepIntervalRef.current = null; }
     setCars([
@@ -710,8 +682,6 @@ function MapView({ donorMode = false, donorFrom = null, donorTo = null }) {
   const corridorColor  = { STABLE: "blue", CRITICAL: "orange", "VERY CRITICAL": "red" }[criticality];
   const corridorPoints = [currentPosition, ...route.slice(segmentIndex + 1)];
   const donorLabel     = donorMode && donorFrom && donorTo ? `🫀 ${HOSPITAL_NAMES[donorFrom]} → ${HOSPITAL_NAMES[donorTo]}` : null;
-
-  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div style={{ position: "relative" }}>
 
@@ -722,8 +692,6 @@ function MapView({ donorMode = false, donorFrom = null, donorTo = null }) {
         boxShadow: "0 3px 12px rgba(0,0,0,0.25)",
         maxHeight: "92vh", overflowY: "auto", minWidth: "220px",
       }}>
-
-        {/* Mode badge */}
         <div style={{ background: donorMode ? "#7b1fa2" : isMaster ? "#4caf50" : "#ff9800", color: "white", padding: "8px", borderRadius: "4px", fontWeight: "bold", textAlign: "center", fontSize: "12px" }}>
           {donorMode ? donorLabel : isMaster ? "🚑 MASTER (Ambulance)" : "📱 FOLLOWER (Traffic Light)"}
         </div>
@@ -745,7 +713,6 @@ function MapView({ donorMode = false, donorFrom = null, donorTo = null }) {
         </button>
 
         {isMaster && (<>
-          {/* Criticality — locked in donor mode */}
           <div style={{ display: "flex", gap: "3px", marginTop: "2px" }}>
             {["STABLE","CRITICAL","VERY CRITICAL"].map(c => (
               <button key={c} disabled={donorMode && c !== "VERY CRITICAL"} onClick={() => setCriticality(c)}
@@ -758,13 +725,9 @@ function MapView({ donorMode = false, donorFrom = null, donorTo = null }) {
               </button>
             ))}
           </div>
-
-          {/* Live ETA */}
           <div style={{ fontWeight: "bold", borderTop: "1px solid #ddd", paddingTop: "6px", marginTop: "4px" }}>
             {arrived ? <span style={{ color: "#2e7d32" }}>✅ {donorMode ? "Organ" : "Ambulance"} Arrived!</span> : <>ETA: {formETA(ETAseconds())}</>}
           </div>
-
-          {/* Route info */}
           {hospitalETAs.length > 0 && (
             <div style={{ fontSize: "12px" }}>
               <b>{donorMode ? "Donor route:" : "Hospital comparison:"}</b>
@@ -777,8 +740,6 @@ function MapView({ donorMode = false, donorFrom = null, donorTo = null }) {
               ))}
             </div>
           )}
-
-          {/* Accident-only controls */}
           {!donorMode && (<>
             <button style={{ background: "#1976d2", color: "white", fontWeight: "bold" }} onClick={autoSelectNearestHospital}>🏥 AUTO SELECT NEAREST</button>
             <button style={{ background: "#555", color: "white" }} onClick={resetLearning}>RESET LEARNING</button>
