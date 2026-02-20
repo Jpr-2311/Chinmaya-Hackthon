@@ -20,6 +20,7 @@ export default function Login() {
     });
   };
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -27,20 +28,12 @@ export default function Login() {
       const user = userCredential.user;
 
       localStorage.setItem("userId", user.uid);
-
-      const userRef = ref(db, `users/${user.uid}`);
-      const snapshot = await get(userRef);
-
+      const snapshot = await get(ref(db, `users/${user.uid}`));
       if (snapshot.exists()) {
-        const userData = snapshot.val();
-        localStorage.setItem("username", userData.username);
-
-        if (userData.role === "admin") {
-          navigate("/admin");
-        } else {
-          navigate("/dashboard");
-        }
+        localStorage.setItem("username", snapshot.val().username);
       }
+
+      // ✅ Do NOT navigate here — App.jsx will handle it
     } catch (error) {
       alert(error.message);
     }

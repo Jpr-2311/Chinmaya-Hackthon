@@ -41,14 +41,7 @@ export default function SignUp() {
       localStorage.setItem("userId", user.uid);
       localStorage.setItem("username", formData.username);
 
-      // alert("User Registered Successfully!");
-
-      // ✅ Redirect based on role instead of always going to /login
-      if (formData.role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate("/dashboard");
-      }
+      // ✅ Do NOT navigate here — App.jsx will handle it
     } catch (error) {
       alert(error.message);
     }
